@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operation Prime Vault — Bank Security Math Mission</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --vault-black: #0a0c12;
+    --vault-dark: #111520;
+    --vault-panel: #161b2e;
+    --vault-card: #1e2540;
+    --vault-border: #2a3356;
+    --gold: #f0c040;
+    --gold-dim: #b89030;
+    --gold-glow: rgba(240,192,64,0.15);
+    --cyan: #40e0d0;
+    --cyan-dim: #20a090;
+    --red: #ff4444;
+    --green: #44ff88;
+    --green-dim: #20a050;
+    --text: #e8eaf0;
+    --text-dim: #8090b0;
+    --prime-color: #7b68ee;
+    --prime-glow: rgba(123,104,238,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--vault-black);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0a0c12 0%, #161b2e 50%, #0d1220 100%);
+    border-bottom: 2px solid var(--gold);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    box-shadow: 0 0 20px var(--gold);
+  }
+  .vault-icon {
+    font-size: 48px;
+    filter: drop-shadow(0 0 12px var(--gold));
+  }
+  .header-text h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px var(--gold-dim);
+  }
+  .header-text p {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--cyan);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .security-badge {
+    margin-left: auto;
+    background: var(--vault-card);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    text-align: center;
+  }
+  .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* NAV TABS */
+  nav {
+    background: var(--vault-dark);
+    border-bottom: 1px solid var(--vault-border);
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-btn:hover { color: var(--gold); background: var(--gold-glow); }
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: var(--gold-glow);
+  }
+  .tab-num {
+    background: var(--vault-border);
+    color: var(--text-dim);
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem;
+  }
+  .tab-btn.active .tab-num { background: var(--gold); color: var(--vault-black); }
+
+  /* MAIN CONTENT */
+  main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* SECTION HEADERS */
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold-dim), transparent);
+  }
+  .section-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--cyan);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--vault-card);
+    border: 1px solid var(--vault-border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+  .card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .card p { color: var(--text); line-height: 1.7; margin-bottom: 12px; font-size: 0.95rem; }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* ========= SECTION 1: FACTORS ========= */
+  .factors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .factor-card {
+    background: var(--vault-panel);
+    border: 1px solid var(--vault-border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .factor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(240,192,64,0.1);
+  }
+  .factor-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 20px var(--gold-dim);
+    margin-bottom: 12px;
+  }
+  .factor-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 12px 0;
+  }
+  .factor-pair {
+    background: var(--vault-card);
+    border: 1px solid var(--vault-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--cyan);
+    transition: all 0.2s;
+  }
+  .factor-pair:hover {
+    background: var(--gold-glow);
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(1.05);
+  }
+  .factor-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  .dot-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .dot:hover { opacity: 1; }
+
+  .factor-explainer {
+    background: var(--vault-panel);
+    border-left: 3px solid var(--cyan);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  /* ========= SECTION 2: DIVISIBILITY ========= */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .rule-card {
+    background: var(--vault-panel);
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid var(--vault-border);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all 0.2s;
+  }
+  .rule-card:hover { border-color: var(--gold); background: var(--gold-glow); }
+  .rule-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    min-width: 48px;
+    text-align: center;
+    line-height: 1;
+  }
+  .rule-text { font-size: 0.9rem; line-height: 1.5; }
+  .rule-text strong { display: block; margin-bottom: 4px; font-size: 0.8rem; letter-spacing: 1px; }
+  .rule-example {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .no-rule-note {
+    background: var(--vault-panel);
+    border: 1px dashed var(--vault-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  /* Quiz */
+  .quiz-setup { margin-bottom: 24px; }
+  .quiz-setup h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .rule-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .rule-toggle {
+    background: var(--vault-panel);
+    border: 2px solid var(--vault-border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .rule-toggle.selected {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-glow);
+  }
+  .quiz-box {
+    background: var(--vault-panel);
+    border: 1px solid var(--vault-border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .quiz-question {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .quiz-number-display {
+    font-family: 'Orbitron', monospace;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--gold-dim);
+    margin: 16px 0;
+    text-align: center;
+  }
+  .quiz-divisor {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    color: var(--cyan);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .quiz-options {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .quiz-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 12px 28px;
+    border-radius: 8px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quiz-btn-yes { background: transparent; border-color: var(--green); color: var(--green); }
+  .quiz-btn-yes:hover { background: rgba(68,255,136,0.1); }
+  .quiz-btn-no { background: transparent; border-color: var(--red); color: var(--red); }
+  .quiz-btn-no:hover { background: rgba(255,68,68,0.1); }
+  .quiz-feedback {
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    min-height: 24px;
+    margin-bottom: 16px;
+  }
+  .quiz-feedback.correct { color: var(--green); }
+  .quiz-feedback.wrong { color: var(--red); }
+  .quiz-score {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .btn-primary {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 12px 24px;
+    background: var(--gold);
+    color: var(--vault-black);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: #ffd060; box-shadow: 0 0 20px var(--gold-dim); }
+  .btn-secondary {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 12px 24px;
+    background: transparent;
+    color: var(--cyan);
+    border: 2px solid var(--cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-secondary:hover { background: rgba(64,224,208,0.1); }
+
+  /* ========= SECTION 3: PRIME NUMBERS ========= */
+  .prime-intro {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) { .prime-intro { grid-template-columns: 1fr; } }
+
+  .prime-vs-card {
+    background: var(--vault-panel);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--vault-border);
+  }
+  .prime-vs-card.prime-side { border-color: var(--prime-color); }
+  .prime-vs-card.composite-side { border-color: var(--gold-dim); }
+  .prime-vs-card h4 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .prime-side h4 { color: var(--prime-color); }
+  .composite-side h4 { color: var(--gold); }
+
+  .prime-number-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .prime-chip {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--prime-glow);
+    border: 2px solid var(--prime-color);
+    color: var(--prime-color);
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .prime-chip:hover, .prime-chip.active {
+    background: var(--prime-color);
+    color: white;
+    box-shadow: 0 0 16px var(--prime-glow);
+  }
+  .prime-detail-box {
+    background: var(--vault-card);
+    border: 1px solid var(--prime-color);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    min-height: 80px;
+    transition: all 0.3s;
+  }
+  .prime-detail-box .pd-number { font-size: 2rem; color: var(--prime-color); font-weight: 700; }
+  .prime-detail-box .pd-factors { color: var(--cyan); margin-top: 8px; }
+  .prime-detail-box .pd-note { color: var(--text-dim); margin-top: 8px; font-size: 0.8rem; }
+
+  .realworld-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .realworld-card {
+    background: var(--vault-panel);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--vault-border);
+    text-align: center;
+  }
+  .rw-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .rw-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .rw-text { font-size: 0.85rem; color: var(--text); line-height: 1.6; }
+
+  /* ========= SECTION 4: PRIME LIST ========= */
+  .prime-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .toggle-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 2px solid var(--prime-color);
+    background: transparent;
+    color: var(--prime-color);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active { background: var(--prime-color); color: white; box-shadow: 0 0 16px var(--prime-glow); }
+  .prime-stats {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .hundreds-section { margin-bottom: 28px; }
+  .hundreds-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vault-border);
+  }
+  .number-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .num-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--vault-border);
+    background: var(--vault-panel);
+    color: var(--text-dim);
+    min-width: 44px;
+    text-align: center;
+    transition: all 0.15s;
+    cursor: default;
+  }
+  .num-cell.is-prime {
+    border-color: var(--prime-color);
+    color: var(--prime-color);
+    background: var(--prime-glow);
+    font-weight: 700;
+  }
+  .num-cell.is-prime:hover {
+    background: var(--prime-color);
+    color: white;
+    box-shadow: 0 0 10px var(--prime-glow);
+  }
+  .num-cell.hidden-composite { opacity: 0.15; }
+
+  /* ========= SECTION 5: VAULT MISSION ========= */
+  .mission-brief {
+    background: var(--vault-panel);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mission-brief::before {
+    content: 'CLASSIFIED';
+    position: absolute;
+    top: 12px; right: -20px;
+    background: var(--red);
+    color: white;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    padding: 4px 32px;
+    transform: rotate(15deg);
+  }
+  .mission-brief h3 {
+    font-family: 'Orbitron', monospace;
+    color: var(--gold);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .mission-brief p { line-height: 1.7; font-size: 0.9rem; }
+
+  .mission-steps { display: flex; flex-direction: column; gap: 20px; }
+  .mission-step {
+    background: var(--vault-panel);
+    border: 1px solid var(--vault-border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+  }
+  .step-badge {
+    position: absolute;
+    top: -12px; left: 20px;
+    background: var(--gold);
+    color: var(--vault-black);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .step-badge.locked { background: var(--vault-border); color: var(--text-dim); }
+  .step-badge.complete { background: var(--green); }
+  .step-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .number-input-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .vault-input {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    width: 120px;
+    padding: 12px;
+    background: var(--vault-card);
+    border: 2px solid var(--vault-border);
+    border-radius: 8px;
+    color: var(--gold);
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .vault-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 12px var(--gold-glow); }
+  .vault-input.valid { border-color: var(--green); color: var(--green); }
+  .vault-input.invalid { border-color: var(--red); color: var(--red); }
+  .input-status {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    min-height: 20px;
+  }
+  .input-status.valid { color: var(--green); }
+  .input-status.invalid { color: var(--red); }
+  .input-status.neutral { color: var(--text-dim); }
+
+  .product-display {
+    text-align: center;
+    padding: 24px;
+    background: var(--vault-card);
+    border-radius: 12px;
+    border: 2px solid var(--vault-border);
+    margin: 16px 0;
+  }
+  .product-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .product-equation {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .product-result {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--gold-dim);
+  }
+
+  .analysis-box {
+    background: var(--vault-card);
+    border-radius: 12px;
+    border: 1px solid var(--vault-border);
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .analysis-q {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .analysis-options {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .analysis-opt {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--vault-border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .analysis-opt:hover { border-color: var(--cyan); color: var(--cyan); }
+  .analysis-opt.selected-yes { border-color: var(--green); color: var(--green); background: rgba(68,255,136,0.08); }
+  .analysis-opt.selected-no { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.08); }
+
+  .divcheck-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .divcheck {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--vault-border);
+    background: var(--vault-panel);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .divcheck.selected { border-color: var(--cyan); color: var(--cyan); background: rgba(64,224,208,0.1); }
+  .divcheck.correct-check { border-color: var(--green); color: var(--green); background: rgba(68,255,136,0.1); }
+  .divcheck.wrong-check { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.1); }
+
+  .vault-result {
+    text-align: center;
+    padding: 28px;
+    border-radius: 12px;
+    margin-top: 20px;
+    display: none;
+  }
+  .vault-result.success {
+    display: block;
+    background: rgba(68,255,136,0.05);
+    border: 2px solid var(--green);
+  }
+  .vault-result.partial {
+    display: block;
+    background: rgba(240,192,64,0.05);
+    border: 2px solid var(--gold);
+  }
+  .vault-result-icon { font-size: 3rem; margin-bottom: 12px; }
+  .vault-result-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .vault-result.success .vault-result-title { color: var(--green); }
+  .vault-result.partial .vault-result-title { color: var(--gold); }
+  .vault-result p { font-size: 0.9rem; line-height: 1.7; color: var(--text); }
+
+  .disabled-step { opacity: 0.4; pointer-events: none; }
+
+  /* TRAINING CHECKLIST */
+  .training-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--vault-panel);
+    border: 1px solid var(--vault-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .training-item:hover {
+    border-color: var(--gold);
+    background: var(--gold-glow);
+    transform: translateX(4px);
+  }
+  .training-icon { font-size: 1.8rem; min-width: 36px; }
+  .training-body { flex: 1; }
+  .training-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .training-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .training-arrow {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    color: var(--gold);
+    align-self: center;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+  .training-item:hover .training-arrow { opacity: 1; }
+
+  /* UTILITY */
+  .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .text-mono { font-family: 'Share Tech Mono', monospace; }
+  .text-gold { color: var(--gold); }
+  .text-cyan { color: var(--cyan); }
+  .text-dim { color: var(--text-dim); }
+  .text-center { text-align: center; }
+  .text-sm { font-size: 0.85rem; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    header { padding: 16px 20px; }
+    .header-text h1 { font-size: 1.2rem; }
+    main { padding: 24px 16px; }
+    .tab-btn { padding: 12px 14px; font-size: 0.6rem; }
+    .prime-intro { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="vault-icon">🏦</div>
+  <div class="header-text">
+    <h1>OPERATION PRIME VAULT</h1>
+    <p>BANK SECURITY TRAINING — ENCRYPTION DIVISION</p>
+  </div>
+  <div class="security-badge">
+    STATUS: <span class="blink text-gold">● ACTIVE</span><br>
+    CLEARANCE: RECRUIT
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" onclick="showTab('factors')">
+    <span class="tab-num">1</span> FACTORS
+  </button>
+  <button class="tab-btn" onclick="showTab('divisibility')">
+    <span class="tab-num">2</span> DIVISIBILITY
+  </button>
+  <button class="tab-btn" onclick="showTab('primes')">
+    <span class="tab-num">3</span> PRIME NUMBERS
+  </button>
+  <button class="tab-btn" onclick="showTab('primelist')">
+    <span class="tab-num">4</span> PRIME DATABASE
+  </button>
+  <button class="tab-btn" onclick="showTab('mission')">
+    <span class="tab-num">5</span> 🔐 VAULT MISSION
+  </button>
+</nav>
+
+<main>
+
+<!-- ===== SECTION 1: FACTORS ===== -->
+<div id="factors" class="section active">
+  <div class="section-title">🔢 FACTORS BRIEFING</div>
+  <div class="section-subtitle">// INTEL MODULE 01 — UNDERSTANDING HOW NUMBERS BREAK APART</div>
+
+  <!-- VAULT MISSION INTRO CHIP -->
+  <div id="vaultIntroCard" style="
+    background: linear-gradient(135deg, #0d1220 0%, #1a1030 50%, #0d1220 100%);
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 0;
+    margin-bottom: 28px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 40px rgba(240,192,64,0.12), inset 0 0 60px rgba(0,0,0,0.4);
+  ">
+    <!-- Top alert bar -->
+    <div style="background:var(--gold); padding:8px 24px; display:flex; align-items:center; gap:10px;">
+      <span style="font-family:'Orbitron',monospace; font-size:0.65rem; font-weight:900; letter-spacing:3px; color:var(--vault-black);">⚠ PRIORITY ALERT — BANK SECURITY DIVISION</span>
+      <span style="margin-left:auto; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--vault-black);" id="missionClock"></span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr auto; gap:0; align-items:center;">
+
+      <!-- Left: Mission text -->
+      <div style="padding:32px 36px;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:900; color:var(--gold); letter-spacing:2px; margin-bottom:16px; text-shadow: 0 0 20px rgba(240,192,64,0.4);">
+          OPERATION PRIME VAULT
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--cyan); letter-spacing:1px; margin-bottom:20px;">
+          TRANSMISSION RECEIVED — CLEARANCE: RECRUIT
+        </div>
+        <p style="font-size:0.95rem; line-height:1.8; color:var(--text); margin-bottom:16px;">
+          Agent, the Prime Vault's encryption has been <strong style="color:var(--red)">compromised</strong>. Enemy code-breakers exploited a weakness — the old key was built from numbers with <strong style="color:var(--red)">too many factors</strong>, making it easy to reverse-engineer.
+        </p>
+        <p style="font-size:0.95rem; line-height:1.8; color:var(--text); margin-bottom:20px;">
+          Your mission: master <strong style="color:var(--gold)">factors</strong>, <strong style="color:var(--gold)">divisibility rules</strong>, and <strong style="color:var(--prime-color)">prime numbers</strong> — then use that knowledge to build an unbreakable encryption key and <strong style="color:var(--green)">secure the vault</strong>.
+        </p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+          <button onclick="triggerVaultOpen()" style="
+            font-family:'Orbitron',monospace; font-size:0.72rem; font-weight:700; letter-spacing:1.5px;
+            padding:12px 24px; background:var(--gold); color:var(--vault-black);
+            border:none; border-radius:8px; cursor:pointer; transition:all 0.2s;
+            box-shadow: 0 0 16px rgba(240,192,64,0.3);
+          " onmouseover="this.style.background='#ffd060'" onmouseout="this.style.background='var(--gold)'">
+            🔓 ATTEMPT VAULT ACCESS
+          </button>
+          <button onclick="showTab('mission')" style="
+            font-family:'Orbitron',monospace; font-size:0.72rem; font-weight:700; letter-spacing:1.5px;
+            padding:12px 24px; background:transparent; color:var(--cyan);
+            border:2px solid var(--cyan); border-radius:8px; cursor:pointer; transition:all 0.2s;
+          " onmouseover="this.style.background='rgba(64,224,208,0.1)'" onmouseout="this.style.background='transparent'">
+            📋 VIEW MISSION BRIEF
+          </button>
+        </div>
+        <div id="vaultAccessMsg" style="margin-top:14px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; min-height:20px;"></div>
+      </div>
+
+      <!-- Right: Animated Vault SVG -->
+      <div style="padding:28px 36px 28px 0; display:flex; flex-direction:column; align-items:center; gap:12px;">
+        <svg id="vaultSVG" width="200" height="220" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer; filter: drop-shadow(0 0 16px rgba(240,192,64,0.25));" onclick="triggerVaultOpen()">
+
+          <!-- Vault body -->
+          <rect x="20" y="20" width="160" height="180" rx="12" fill="#1e2540" stroke="#f0c040" stroke-width="3"/>
+          <!-- Vault body sheen -->
+          <rect x="20" y="20" width="160" height="40" rx="12" fill="rgba(255,255,255,0.03)"/>
+          <!-- Bolt corners -->
+          <circle cx="36" cy="36" r="5" fill="#2a3356" stroke="#f0c040" stroke-width="1.5"/>
+          <circle cx="164" cy="36" r="5" fill="#2a3356" stroke="#f0c040" stroke-width="1.5"/>
+          <circle cx="36" cy="184" r="5" fill="#2a3356" stroke="#f0c040" stroke-width="1.5"/>
+          <circle cx="164" cy="184" r="5" fill="#2a3356" stroke="#f0c040" stroke-width="1.5"/>
+
+          <!-- Door panel -->
+          <rect id="vaultDoor" x="30" y="30" width="140" height="160" rx="8" fill="#161b2e" stroke="#b89030" stroke-width="2"/>
+
+          <!-- Main dial ring -->
+          <circle cx="100" cy="110" r="48" fill="#111520" stroke="#f0c040" stroke-width="3"/>
+          <circle cx="100" cy="110" r="40" fill="#0d1220" stroke="#2a3356" stroke-width="1.5"/>
+
+          <!-- Dial tick marks -->
+          <g id="dialTicks" stroke="#b89030" stroke-width="1.5">
+            <line x1="100" y1="66" x2="100" y2="74"/>
+            <line x1="100" y1="146" x2="100" y2="154"/>
+            <line x1="56" y1="110" x2="64" y2="110"/>
+            <line x1="136" y1="110" x2="144" y2="110"/>
+            <line x1="69" y1="79" x2="74" y2="84"/>
+            <line x1="126" y1="136" x2="131" y2="141"/>
+            <line x1="131" y1="79" x2="126" y2="84"/>
+            <line x1="74" y1="136" x2="69" y2="141"/>
+          </g>
+
+          <!-- Dial spokes -->
+          <g id="dialSpokes" stroke="#f0c040" stroke-width="2" transform-origin="100 110">
+            <line x1="100" y1="110" x2="100" y2="74" stroke-width="2.5"/>
+            <line x1="100" y1="110" x2="126" y2="136" stroke-width="1.5" stroke-opacity="0.6"/>
+            <line x1="100" y1="110" x2="74" y2="136" stroke-width="1.5" stroke-opacity="0.6"/>
+          </g>
+
+          <!-- Dial center -->
+          <circle cx="100" cy="110" r="8" fill="#f0c040"/>
+          <circle cx="100" cy="110" r="4" fill="#0a0c12"/>
+
+          <!-- Handle bar -->
+          <rect x="86" y="162" width="28" height="8" rx="4" fill="#b89030" stroke="#f0c040" stroke-width="1"/>
+
+          <!-- Lock indicator light -->
+          <circle id="lockLight" cx="100" cy="46" r="6" fill="#ff4444">
+            <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <text x="100" y="49" text-anchor="middle" font-family="monospace" font-size="6" fill="#0a0c12" font-weight="bold">🔒</text>
+
+          <!-- LOCKED label -->
+          <text id="vaultLabel" x="100" y="195" text-anchor="middle" font-family="monospace" font-size="9" fill="#b89030" letter-spacing="2">LOCKED</text>
+
+          <!-- Spinning dial animation group -->
+          <animateTransform id="dialSpin"
+            attributeName="transform"
+            attributeType="XML"
+            type="rotate"
+            from="0 100 110"
+            to="360 100 110"
+            dur="3s"
+            begin="indefinite"
+            repeatCount="1"
+            href="#dialSpokes"/>
+
+        </svg>
+
+        <div style="font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); text-align:center; letter-spacing:1px;">
+          Click vault to attempt access
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>WHAT IS A FACTOR?</h3>
+    <p>A <strong style="color:var(--gold)">factor</strong> is any whole number that divides evenly into another number — with no remainder. Every number can be broken apart (factored) into pairs of numbers that multiply together to make it.</p>
+    <p>Think of it like this: if you're a security agent cracking a code, understanding factors tells you all the different ways a number can be built. The more factors a number has, the more ways it can be split — and the easier it is to find patterns in encrypted data.</p>
+  </div>
+
+  <div class="factor-explainer">
+    💡 <strong style="color:var(--cyan)">How to read these cards:</strong> Each card below shows a number, its dot grid (one dot per unit), and all its factor pairs — the pairs of numbers that multiply together to give you that number. Hover over any factor pair to highlight it.
+  </div>
+
+  <div class="factors-grid">
+
+    <!-- 3 -->
+    <div class="factor-card">
+      <div class="factor-number">3</div>
+      <div class="dot-grid" id="dots-3"></div>
+      <div class="factor-visual">
+        <span class="factor-pair">1 × 3</span>
+        <span class="factor-pair">3 × 1</span>
+      </div>
+      <div class="factor-label">FACTORS: 1, 3 &nbsp;|&nbsp; COUNT: 2</div>
+      <div class="mt-8 text-sm" style="color:var(--text-dim)">Only 2 factors — that makes 3 a <span style="color:var(--prime-color)">prime number</span>!</div>
+    </div>
+
+    <!-- 5 -->
+    <div class="factor-card">
+      <div class="factor-number">5</div>
+      <div class="dot-grid" id="dots-5"></div>
+      <div class="factor-visual">
+        <span class="factor-pair">1 × 5</span>
+        <span class="factor-pair">5 × 1</span>
+      </div>
+      <div class="factor-label">FACTORS: 1, 5 &nbsp;|&nbsp; COUNT: 2</div>
+      <div class="mt-8 text-sm" style="color:var(--text-dim)">Only 2 factors — <span style="color:var(--prime-color)">prime</span> again!</div>
+    </div>
+
+    <!-- 8 -->
+    <div class="factor-card">
+      <div class="factor-number">8</div>
+      <div class="dot-grid" id="dots-8"></div>
+      <div class="factor-visual">
+        <span class="factor-pair">1 × 8</span>
+        <span class="factor-pair">2 × 4</span>
+        <span class="factor-pair">4 × 2</span>
+        <span class="factor-pair">8 × 1</span>
+      </div>
+      <div class="factor-label">FACTORS: 1, 2, 4, 8 &nbsp;|&nbsp; COUNT: 4</div>
+      <div class="mt-8 text-sm" style="color:var(--text-dim)">4 factors — <span style="color:var(--gold)">composite number</span></div>
+    </div>
+
+    <!-- 12 -->
+    <div class="factor-card">
+      <div class="factor-number">12</div>
+      <div class="dot-grid" id="dots-12"></div>
+      <div class="factor-visual">
+        <span class="factor-pair">1 × 12</span>
+        <span class="factor-pair">2 × 6</span>
+        <span class="factor-pair">3 × 4</span>
+        <span class="factor-pair">4 × 3</span>
+        <span class="factor-pair">6 × 2</span>
+        <span class="factor-pair">12 × 1</span>
+      </div>
+      <div class="factor-label">FACTORS: 1, 2, 3, 4, 6, 12 &nbsp;|&nbsp; COUNT: 6</div>
+      <div class="mt-8 text-sm" style="color:var(--text-dim)">6 factors — very <span style="color:var(--gold)">composite</span>!</div>
+    </div>
+
+    <!-- 24 -->
+    <div class="factor-card">
+      <div class="factor-number">24</div>
+      <div class="dot-grid" id="dots-24"></div>
+      <div class="factor-visual">
+        <span class="factor-pair">1 × 24</span>
+        <span class="factor-pair">2 × 12</span>
+        <span class="factor-pair">3 × 8</span>
+        <span class="factor-pair">4 × 6</span>
+        <span class="factor-pair">6 × 4</span>
+        <span class="factor-pair">8 × 3</span>
+        <span class="factor-pair">12 × 2</span>
+        <span class="factor-pair">24 × 1</span>
+      </div>
+      <div class="factor-label">FACTORS: 1,2,3,4,6,8,12,24 &nbsp;|&nbsp; COUNT: 8</div>
+      <div class="mt-8 text-sm" style="color:var(--text-dim)">8 factors — the most <span style="color:var(--gold)">composite</span> of the group!</div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h3>PRIME VS. COMPOSITE — THE KEY DIFFERENCE</h3>
+    <p>Notice that <strong style="color:var(--prime-color)">3 and 5</strong> only have exactly 2 factors (1 and themselves). These are <strong style="color:var(--prime-color)">prime numbers</strong> — they can't be broken down into other whole number pairs.</p>
+    <p><strong style="color:var(--gold)">8, 12, and 24</strong> have more than 2 factors. These are <strong style="color:var(--gold)">composite numbers</strong> — they can be split multiple ways.</p>
+    <p>And <strong style="color:var(--cyan)">1</strong>? It has only one factor (itself). It's neither prime nor composite — it's its own special category.</p>
+  </div>
+</div>
+
+
+<!-- ===== SECTION 2: DIVISIBILITY ===== -->
+<div id="divisibility" class="section">
+  <div class="section-title">📐 DIVISIBILITY RULES</div>
+  <div class="section-subtitle">// INTEL MODULE 02 — SHORTCUTS FOR FINDING FACTORS FAST</div>
+
+  <div class="card">
+    <h3>WHY DIVISIBILITY RULES MATTER</h3>
+    <p>A divisibility rule is a quick shortcut that lets you check whether a number is a factor of another — without doing long division. For a bank security agent working with large encryption codes, these rules are essential tools for breaking down numbers fast.</p>
+  </div>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <div class="rule-number" style="color:#ff6b6b">2</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 2</strong>
+        The last digit is 0, 2, 4, 6, or 8
+        <div class="rule-example">Ex: 346 → last digit 6 ✓ &nbsp;|&nbsp; 571 → last digit 1 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#ffa94d">3</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 3</strong>
+        Sum of all digits is a multiple of 3
+        <div class="rule-example">Ex: 123 → 1+2+3=6, 6÷3=2 ✓ &nbsp;|&nbsp; 124 → 1+2+4=7 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#ffe066">4</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 4</strong>
+        Last two digits form a multiple of 4
+        <div class="rule-example">Ex: 312 → 12÷4=3 ✓ &nbsp;|&nbsp; 318 → 18÷4=4.5 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#69db7c">5</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 5</strong>
+        Last digit is 0 or 5
+        <div class="rule-example">Ex: 340 → last digit 0 ✓ &nbsp;|&nbsp; 343 → last digit 3 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#4dd0e1">6</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 6</strong>
+        Both the rule for 2 AND rule for 3 apply
+        <div class="rule-example">Ex: 234 → even ✓, 2+3+4=9 ✓ → divisible by 6 ✓</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#74c0fc">8</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 8</strong>
+        Last three digits form a multiple of 8
+        <div class="rule-example">Ex: 1,024 → 024=24, 24÷8=3 ✓ &nbsp;|&nbsp; 1,022 → 022÷8=2.75 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#b197fc">9</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 9</strong>
+        Sum of all digits is a multiple of 9
+        <div class="rule-example">Ex: 729 → 7+2+9=18, 18÷9=2 ✓ &nbsp;|&nbsp; 728 → sum=17 ✗</div>
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-number" style="color:#f783ac">10</div>
+      <div class="rule-text">
+        <strong style="color:var(--gold)">RULE FOR 10</strong>
+        Last digit is 0
+        <div class="rule-example">Ex: 450 → last digit 0 ✓ &nbsp;|&nbsp; 455 → last digit 5 ✗</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-rule-note">
+    ⚠️ &nbsp; <strong style="color:var(--text)">1 and 7</strong> — No simple divisibility shortcut exists for these. Every number is divisible by 1, so no test is needed. For 7, the only reliable method is to do the division or use long division. These are the agents that play by their own rules.
+  </div>
+
+  <!-- QUIZ -->
+  <div class="card">
+    <h3>🎯 DIVISIBILITY QUIZ — TEST YOUR SKILLS</h3>
+
+    <div class="quiz-setup">
+      <p class="text-sm text-dim mt-8" style="margin-bottom:12px">Select which divisibility rules you want to be tested on:</p>
+      <div class="rule-toggles" id="ruleToggles">
+        <button class="rule-toggle selected" data-rule="2" onclick="toggleRule(this)">÷ 2</button>
+        <button class="rule-toggle selected" data-rule="3" onclick="toggleRule(this)">÷ 3</button>
+        <button class="rule-toggle selected" data-rule="4" onclick="toggleRule(this)">÷ 4</button>
+        <button class="rule-toggle selected" data-rule="5" onclick="toggleRule(this)">÷ 5</button>
+        <button class="rule-toggle selected" data-rule="6" onclick="toggleRule(this)">÷ 6</button>
+        <button class="rule-toggle selected" data-rule="8" onclick="toggleRule(this)">÷ 8</button>
+        <button class="rule-toggle selected" data-rule="9" onclick="toggleRule(this)">÷ 9</button>
+        <button class="rule-toggle selected" data-rule="10" onclick="toggleRule(this)">÷ 10</button>
+      </div>
+      <button class="btn-primary" onclick="startQuiz()">START QUIZ</button>
+    </div>
+
+    <div class="quiz-box" id="quizBox" style="display:none">
+      <div class="quiz-question">IS THIS NUMBER DIVISIBLE BY...</div>
+      <div class="quiz-number-display" id="quizNumber">—</div>
+      <div class="quiz-divisor" id="quizDivisor">÷ ?</div>
+      <div class="quiz-options">
+        <button class="quiz-btn quiz-btn-yes" onclick="answerQuiz(true)">✓ YES</button>
+        <button class="quiz-btn quiz-btn-no" onclick="answerQuiz(false)">✗ NO</button>
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div class="quiz-score" id="quizScore">Score: 0 / 0</div>
+      <div class="flex-row mt-16" style="justify-content:center;gap:12px">
+        <button class="btn-secondary" onclick="nextQuiz()">NEXT QUESTION →</button>
+        <button class="btn-secondary" onclick="resetQuiz()">RESTART</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== SECTION 3: PRIMES ===== -->
+<div id="primes" class="section">
+  <div class="section-title">⭐ PRIME NUMBER INTELLIGENCE</div>
+  <div class="section-subtitle">// INTEL MODULE 03 — THE BUILDING BLOCKS OF ALL ENCRYPTION</div>
+
+  <div class="card">
+    <h3>WHAT MAKES A NUMBER PRIME?</h3>
+    <p>A <strong style="color:var(--prime-color)">prime number</strong> has exactly <strong style="color:var(--gold)">two distinct factors</strong>: 1 and itself. It cannot be divided evenly by any other whole number. This makes prime numbers the "atoms" of mathematics — the indivisible building blocks that all other numbers are made from.</p>
+    <p>A <strong style="color:var(--gold)">composite number</strong> has <strong>more than two factors</strong> — meaning it can be broken down into smaller whole number pairs. Most numbers you encounter every day are composite. Real bank encryption relies on primes precisely because they resist being broken apart.</p>
+    <p>And <strong style="color:var(--cyan)">1</strong> is neither prime nor composite — it's its own special case with only one factor.</p>
+  </div>
+
+  <!-- THREE-COLUMN DEFINITION STRIP -->
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:28px;">
+    <div style="background:var(--vault-panel); border:2px solid var(--prime-color); border-radius:12px; padding:20px; text-align:center;">
+      <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--prime-color); letter-spacing:1px; margin-bottom:10px;">⭐ PRIME</div>
+      <div style="font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:var(--prime-color); margin-bottom:10px;">7</div>
+      <div style="font-size:0.82rem; color:var(--text); line-height:1.6;">Factors: <strong style="color:var(--prime-color)">1 and 7 only</strong><br>Cannot be divided evenly by anything else.<br><br><span style="color:var(--text-dim)">Exactly 2 factors → PRIME ✓</span></div>
+    </div>
+    <div style="background:var(--vault-panel); border:2px solid var(--gold); border-radius:12px; padding:20px; text-align:center;">
+      <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--gold); letter-spacing:1px; margin-bottom:10px;">🔶 COMPOSITE</div>
+      <div style="font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:var(--gold); margin-bottom:10px;">12</div>
+      <div style="font-size:0.82rem; color:var(--text); line-height:1.6;">Factors: <strong style="color:var(--gold)">1, 2, 3, 4, 6, 12</strong><br>Can be broken into many pairs.<br><br><span style="color:var(--text-dim)">More than 2 factors → COMPOSITE ✓</span></div>
+    </div>
+    <div style="background:var(--vault-panel); border:2px solid var(--cyan-dim); border-radius:12px; padding:20px; text-align:center;">
+      <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--cyan); letter-spacing:1px; margin-bottom:10px;">🔵 SPECIAL CASE</div>
+      <div style="font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:var(--cyan); margin-bottom:10px;">1</div>
+      <div style="font-size:0.82rem; color:var(--text); line-height:1.6;">Factors: <strong style="color:var(--cyan)">1 only</strong><br>Only one factor — doesn't qualify as either.<br><br><span style="color:var(--text-dim)">1 factor → NEITHER ✓</span></div>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE COMPARE PANEL -->
+  <div class="card" style="margin-bottom:8px;">
+    <h3>🔬 COMPARE ANY TWO NUMBERS — PRIME VS. COMPOSITE</h3>
+    <p style="font-size:0.88rem; margin-bottom:20px;">Click any number below to load it into the comparison panel. Pick one from each column to see them side by side.</p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+      <!-- Prime picker -->
+      <div>
+        <div style="font-family:'Orbitron',monospace; font-size:0.7rem; color:var(--prime-color); letter-spacing:1px; margin-bottom:10px;">⭐ PRIMES (1–19)</div>
+        <div class="prime-number-chips" id="primeChips"></div>
+      </div>
+      <!-- Composite picker -->
+      <div>
+        <div style="font-family:'Orbitron',monospace; font-size:0.7rem; color:var(--gold); letter-spacing:1px; margin-bottom:10px;">🔶 COMPOSITES (1–19)</div>
+        <div class="prime-number-chips" id="compositeChips"></div>
+      </div>
+    </div>
+
+    <!-- Side-by-side comparison -->
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:start;">
+      <!-- Left panel -->
+      <div class="prime-detail-box" id="leftDetail" style="min-height:160px;">
+        <span style="color:var(--text-dim); font-size:0.8rem;">Click a number above to inspect it here</span>
+      </div>
+      <!-- VS divider -->
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 8px;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.2rem; font-weight:900; color:var(--vault-border);">VS</div>
+        <div style="width:1px; height:80px; background:var(--vault-border); margin-top:8px;"></div>
+      </div>
+      <!-- Right panel -->
+      <div class="prime-detail-box" id="rightDetail" style="min-height:160px; border-color:var(--gold-dim);">
+        <span style="color:var(--text-dim); font-size:0.8rem;">Click a number above to inspect it here</span>
+      </div>
+    </div>
+
+    <!-- Comparison summary bar -->
+    <div id="comparisonSummary" style="display:none; margin-top:16px; background:var(--vault-card); border-radius:10px; padding:16px 20px; font-size:0.88rem; line-height:1.7; border:1px solid var(--vault-border);">
+    </div>
+  </div>
+
+  <!-- FACTOR COUNT VISUAL -->
+  <div class="card" style="margin-bottom:28px;">
+    <h3>📊 FACTOR COUNT COMPARISON — PRIMES VS. COMPOSITES (1–19)</h3>
+    <p style="font-size:0.88rem; margin-bottom:20px;">Every prime has exactly 2 factors. Composite numbers grow their factor count as they become divisible by more numbers. The bar below shows how many factors each number from 2–19 has.</p>
+    <div id="factorBarChart" style="display:flex; flex-direction:column; gap:6px;"></div>
+    <div style="display:flex; gap:20px; margin-top:14px; font-family:'Share Tech Mono',monospace; font-size:0.75rem;">
+      <span><span style="display:inline-block; width:12px; height:12px; background:var(--prime-color); border-radius:2px; margin-right:6px; vertical-align:middle;"></span>Prime (2 factors)</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:var(--gold); border-radius:2px; margin-right:6px; vertical-align:middle;"></span>Composite (3+ factors)</span>
+    </div>
+  </div>
+
+  <!-- REAL WORLD SECTION -->
+  <div class="card mt-24" style="margin-bottom:16px;">
+    <h3>🌍 REAL WORLD CONNECTIONS</h3>
+    <p>Whether a number is prime or composite changes how useful it is in the real world. Composite numbers are flexible — they split evenly in many ways. Primes are stubborn — they refuse to split, which makes them unpredictable and powerful for security.</p>
+  </div>
+
+  <div class="realworld-grid">
+    <div class="realworld-card">
+      <div class="rw-icon">🍳</div>
+      <div class="rw-title">COOKING</div>
+      <div class="rw-text"><strong style="color:var(--gold)">12 cookies</strong> (composite) split evenly among 2, 3, 4, or 6 people — great for sharing. <strong style="color:var(--prime-color)">13 cookies</strong> (prime)? Someone always gets an extra. Primes don't share well.</div>
+    </div>
+    <div class="realworld-card">
+      <div class="rw-icon">🌱</div>
+      <div class="rw-title">GARDENING</div>
+      <div class="rw-text"><strong style="color:var(--gold)">12 seeds</strong> (composite) can form a 3×4, 2×6, or 1×12 grid. <strong style="color:var(--prime-color)">17 seeds</strong> (prime) can only make a 1×17 row — one long line, no rectangles possible.</div>
+    </div>
+    <div class="realworld-card">
+      <div class="rw-icon">⚽</div>
+      <div class="rw-title">SPORTS</div>
+      <div class="rw-text"><strong style="color:var(--prime-color)">11 players</strong> on a soccer team (prime) — can't split into equal sub-groups for drills. <strong style="color:var(--gold)">12 players</strong> (composite) can drill in pairs, trios, or groups of 4 or 6.</div>
+    </div>
+    <div class="realworld-card">
+      <div class="rw-icon">🔐</div>
+      <div class="rw-title">ENCRYPTION</div>
+      <div class="rw-text">A <strong style="color:var(--gold)">composite key</strong> has factors an attacker can find quickly. A key built from <strong style="color:var(--prime-color)">two large primes</strong> multiplied together has no easy shortcut — making it the foundation of real-world bank security.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== SECTION 4: PRIME LIST ===== -->
+<div id="primelist" class="section">
+  <div class="section-title">🗄️ PRIME NUMBER DATABASE</div>
+  <div class="section-subtitle">// INTEL MODULE 04 — ALL NUMBERS 1–1000, GROUPED BY HUNDREDS</div>
+
+  <div class="prime-controls">
+    <button class="toggle-btn" id="togglePrimeBtn" onclick="togglePrimeView()">SHOW PRIMES ONLY</button>
+    <button class="toggle-btn active" id="toggleAllBtn" onclick="toggleAllView()">SHOW ALL NUMBERS</button>
+    <div class="prime-stats" id="primeStats">Loading...</div>
+  </div>
+
+  <div id="primeListContainer"></div>
+</div>
+
+
+<!-- ===== SECTION 5: VAULT MISSION ===== -->
+<div id="mission" class="section">
+  <div class="section-title">🔐 VAULT MISSION — SECURE THE ENCRYPTION</div>
+  <div class="section-subtitle">// FINAL ASSESSMENT — CLEARANCE LEVEL: CLASSIFIED</div>
+
+  <!-- NARRATIVE INTRO -->
+  <div class="mission-brief">
+    <h3>📋 URGENT TRANSMISSION — BANK SECURITY DIVISION</h3>
+    <p>Agent, we have a situation. The Prime Vault — our most secure facility — has had its encryption system compromised. The old security code was cracked because it was built using <strong style="color:var(--red)">composite numbers</strong> with too many factors, making it easy for code-breakers to reverse-engineer.</p>
+    <p class="mt-8">Your job is to build a new, unbreakable encryption key. But here's the catch: <strong style="color:var(--gold)">you can't just guess.</strong> A bad key could bring down the entire vault's security. You need to know exactly what you're doing before you touch the system.</p>
+    <p class="mt-8">The encryption process works like this: <strong style="color:var(--cyan)">two 3-digit prime numbers are multiplied together</strong> to create a key that is nearly impossible to factor back apart. Why? Because primes have no "hidden" factors — they're mathematically locked. When you multiply two of them, the only way to break the code is to already know which two primes were used.</p>
+    <p class="mt-8" style="color:var(--text-dim); font-size:0.9rem">Before you can access the vault terminal, you must complete your training. Work through each intel module in order — each one builds the knowledge you'll need to complete this mission successfully.</p>
+  </div>
+
+  <!-- TRAINING CHECKLIST -->
+  <div class="card" style="margin-bottom:28px;">
+    <h3>🎓 AGENT TRAINING CHECKLIST</h3>
+    <p style="margin-bottom:20px; font-size:0.9rem;">Complete all four training modules before attempting the mission. Each one teaches a critical skill you will need to build and analyze your vault key.</p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="training-item" onclick="showTab('factors')">
+        <div class="training-icon">🔢</div>
+        <div class="training-body">
+          <div class="training-title">MODULE 01 — FACTORS</div>
+          <div class="training-desc">Learn how numbers can be broken into factor pairs. You need to understand factors to know why prime numbers are special — and why composite numbers make weak encryption keys.</div>
+        </div>
+        <div class="training-arrow">→</div>
+      </div>
+      <div class="training-item" onclick="showTab('divisibility')">
+        <div class="training-icon">📐</div>
+        <div class="training-body">
+          <div class="training-title">MODULE 02 — DIVISIBILITY RULES</div>
+          <div class="training-desc">Master the shortcuts for spotting factors fast. In the final mission, you'll need to apply these rules to analyze your encryption key and identify its factors — so practice the quiz until you're confident.</div>
+        </div>
+        <div class="training-arrow">→</div>
+      </div>
+      <div class="training-item" onclick="showTab('primes')">
+        <div class="training-icon">⭐</div>
+        <div class="training-body">
+          <div class="training-title">MODULE 03 — PRIME NUMBERS</div>
+          <div class="training-desc">Understand what makes a prime number unique. You'll need to correctly identify prime numbers to complete this mission — choosing a composite number by mistake will invalidate your key.</div>
+        </div>
+        <div class="training-arrow">→</div>
+      </div>
+      <div class="training-item" onclick="showTab('primelist')">
+        <div class="training-icon">🗄️</div>
+        <div class="training-body">
+          <div class="training-title">MODULE 04 — PRIME DATABASE</div>
+          <div class="training-desc">Browse all prime numbers up to 1000. Use this as your reference tool when choosing your two 3-digit primes for the mission. Don't skip this — picking the wrong number will fail the mission.</div>
+        </div>
+        <div class="training-arrow">→</div>
+      </div>
+    </div>
+    <div class="mt-16" style="background:var(--vault-panel); border:1px dashed var(--gold); border-radius:8px; padding:14px 18px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--gold);">
+      ⚠️ &nbsp; SECURITY WARNING: The vault terminal below is live. Every number you enter will be verified against the prime number database. Entering a composite number will trigger a security alert and lock that step until corrected.
+    </div>
+  </div>
+
+  <!-- MISSION OBJECTIVE BREAKDOWN -->
+  <div class="card" style="margin-bottom:28px; border-color: var(--cyan);">
+    <h3 style="color:var(--cyan);">🎯 MISSION OBJECTIVES — READ CAREFULLY</h3>
+    <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--gold); min-width:32px;">①</div>
+        <div style="font-size:0.9rem; line-height:1.7;"><strong style="color:var(--text)">Choose two 3-digit prime numbers.</strong> They must be different from each other, and each must be a true prime — divisible only by 1 and itself. Use the Prime Database if you're unsure.</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--gold); min-width:32px;">②</div>
+        <div style="font-size:0.9rem; line-height:1.7;"><strong style="color:var(--text)">Multiply them together</strong> to generate your encryption key. This is your vault code — a large number built from two prime building blocks.</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--gold); min-width:32px;">③</div>
+        <div style="font-size:0.9rem; line-height:1.7;"><strong style="color:var(--text)">Determine whether your key is prime.</strong> Think carefully — does multiplying two numbers together ever produce a prime? What does that tell you about the factors of your key?</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div style="font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--gold); min-width:32px;">④</div>
+        <div style="font-size:0.9rem; line-height:1.7;"><strong style="color:var(--text)">Identify which divisibility rules apply</strong> to your encryption key. Use what you learned in Module 02 to crack your own code — and understand why it's still secure against outside attackers.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mission-brief" style="border-color:var(--prime-color); margin-bottom:28px;">
+    <h3 style="color:var(--prime-color);">💡 WHY PRIME NUMBERS MAKE THE BEST KEYS</h3>
+    <p>Here's the secret the security division doesn't usually share with recruits: when you multiply two large primes together, you get a number that <em>looks</em> ordinary. But to figure out which two primes were used, an attacker would have to test thousands — sometimes millions — of possibilities. There's no shortcut.</p>
+    <p class="mt-8">Your encryption key in this mission won't be large enough to stop a real supercomputer, but you'll understand the <em>exact same principle</em> used to protect real bank accounts, passwords, and government communications around the world. That's what makes this math matter.</p>
+  </div>
+
+  <div class="mission-steps">
+
+    <!-- STEP 1 -->
+    <div class="mission-step" id="step1">
+      <div class="step-badge" id="badge1">STEP 1</div>
+      <div class="step-title">CHOOSE YOUR FIRST PRIME NUMBER (3 digits)</div>
+      <div class="number-input-row">
+        <input type="number" class="vault-input" id="prime1Input" placeholder="???" min="100" max="999" oninput="validatePrime(1)" />
+        <div>
+          <div class="input-status neutral" id="status1">Enter a 3-digit number</div>
+        </div>
+      </div>
+      <div style="background:var(--vault-panel); border-left:3px solid var(--cyan); padding:12px 16px; border-radius:0 8px 8px 0; margin-top:12px; font-size:0.85rem; line-height:1.7;">
+        <strong style="color:var(--cyan); font-family:'Orbitron',monospace; font-size:0.75rem; letter-spacing:1px;">🔍 HOW TO CHOOSE A VALID PRIME:</strong><br>
+        A prime number has <strong>exactly 2 factors</strong> — 1 and itself. That means it can't be divided evenly by 2, 3, 4, 5, or any other number. 
+        Not sure which 3-digit numbers are prime? Head to <strong style="color:var(--gold)">Module 04 — Prime Database</strong> and toggle to "Primes Only" to browse your options. Come back here once you've chosen.
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="mission-step" id="step2">
+      <div class="step-badge" id="badge2">STEP 2</div>
+      <div class="step-title">CHOOSE YOUR SECOND PRIME NUMBER (3 digits, must be different from Step 1)</div>
+      <div class="number-input-row">
+        <input type="number" class="vault-input" id="prime2Input" placeholder="???" min="100" max="999" oninput="validatePrime(2)" />
+        <div>
+          <div class="input-status neutral" id="status2">Enter a 3-digit number</div>
+        </div>
+      </div>
+      <div style="background:var(--vault-panel); border-left:3px solid var(--cyan); padding:12px 16px; border-radius:0 8px 8px 0; margin-top:12px; font-size:0.85rem; line-height:1.7;">
+        <strong style="color:var(--cyan); font-family:'Orbitron',monospace; font-size:0.75rem; letter-spacing:1px;">💡 SECURITY TIP:</strong><br>
+        Using two <em>different</em> primes makes the key harder to crack. If you used the same number twice (e.g., 101 × 101), an attacker only needs to find one prime — not two. Choose wisely.
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="mission-step disabled-step" id="step3">
+      <div class="step-badge locked" id="badge3">STEP 3 — LOCKED</div>
+      <div class="step-title">GENERATE YOUR ENCRYPTION KEY</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px; line-height:1.7;">Both primes verified. Now multiply them together to produce your encryption key. This large number is what the vault will use as its security code. Write it down — you'll need to analyze it in the next step.</p>
+      <div class="product-display" id="productDisplay">
+        <div class="product-label">ENCRYPTION KEY</div>
+        <div class="product-equation" id="productEquation">??? × ??? =</div>
+        <div class="product-result" id="productResult">—</div>
+      </div>
+      <button class="btn-primary" onclick="generateProduct()" id="generateBtn" style="display:none">⚡ GENERATE KEY</button>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="mission-step disabled-step" id="step4">
+      <div class="step-badge locked" id="badge4">STEP 4 — LOCKED</div>
+      <div class="step-title">ANALYZE YOUR ENCRYPTION KEY</div>
+
+      <div style="background:var(--vault-panel); border-left:3px solid var(--gold); padding:14px 18px; border-radius:0 8px 8px 0; margin-bottom:16px; font-size:0.85rem; line-height:1.7;">
+        <strong style="color:var(--gold); font-family:'Orbitron',monospace; font-size:0.75rem; letter-spacing:1px;">📋 WHAT YOU'RE DOING HERE:</strong><br>
+        You're acting as both the security agent <em>and</em> the code-breaker. A great security agent doesn't just build a key — they stress-test it. Answer the two questions below to prove you understand what your encryption key is made of, and why it's structured the way it is.
+      </div>
+
+      <div class="analysis-box" id="analysisBox">
+        <div class="analysis-q">Q1: IS YOUR ENCRYPTION KEY A PRIME NUMBER?<br><span style="color:var(--text-dim);font-size:0.75rem;font-family:'Nunito',sans-serif;font-weight:400;">Think: you multiplied two numbers together to get this key. A prime number can only be divided by 1 and itself — can a product of two different numbers ever meet that definition?</span></div>
+        <div class="analysis-options">
+          <button class="analysis-opt" id="opt-yes" onclick="selectPrimeAnswer('yes')">YES — It is prime</button>
+          <button class="analysis-opt" id="opt-no" onclick="selectPrimeAnswer('no')">NO — It is not prime</button>
+        </div>
+        <div id="primeAnswerFeedback" style="min-height:20px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; margin-bottom:16px;"></div>
+
+        <div id="divRulesSection" style="display:none">
+          <div class="analysis-q">Q2: WHICH DIVISIBILITY RULES APPLY TO YOUR ENCRYPTION KEY?<br><span style="color:var(--text-dim);font-size:0.75rem;font-family:'Nunito',sans-serif;font-weight:400;">Apply each rule from Module 02 to your key. Check the last digit — is it even? Is it 0 or 5? Add up the digits — is the sum divisible by 3 or 9? Select every rule that works, then submit. Green = correct, Red = wrong.</span></div>
+          <div class="divcheck-grid" id="divCheckGrid"></div>
+          <button class="btn-primary" onclick="submitDivRules()">SUBMIT ANALYSIS</button>
+        </div>
+      </div>
+
+      <div class="vault-result" id="vaultResult">
+        <div class="vault-result-icon" id="resultIcon">🔐</div>
+        <div class="vault-result-title" id="resultTitle">—</div>
+        <p id="resultText">—</p>
+        <button class="btn-secondary mt-16" onclick="resetMission()">🔄 RUN MISSION AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===================== TAB NAVIGATION =====================
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = ['factors','divisibility','primes','primelist','mission'].indexOf(id);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+}
+
+// ===================== DOT GRIDS =====================
+function buildDots() {
+  [3,5,8,12,24].forEach(n => {
+    const el = document.getElementById('dots-' + n);
+    if (!el) return;
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      el.appendChild(d);
+    }
+  });
+}
+buildDots();
+
+// ===================== PRIME HELPERS =====================
+function isPrime(n) {
+  if (n < 2) return false;
+  if (n === 2) return true;
+  if (n % 2 === 0) return false;
+  for (let i = 3; i <= Math.sqrt(n); i += 2) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+function getFactors(n) {
+  const f = [];
+  for (let i = 1; i <= n; i++) {
+    if (n % i === 0) f.push(i);
+  }
+  return f;
+}
+
+// ===================== SECTION 3: PRIME CHIPS + COMPARISON =====================
+function buildPrimeSection() {
+  const primes19 = [2,3,5,7,11,13,17,19];
+  const composites = [4,6,8,9,10,12,14,15,16,18];
+
+  const primeContainer = document.getElementById('primeChips');
+  primes19.forEach(p => {
+    const chip = document.createElement('button');
+    chip.className = 'prime-chip';
+    chip.textContent = p;
+    chip.dataset.side = 'left';
+    chip.onclick = () => loadPanel('left', p, true, chip);
+    primeContainer.appendChild(chip);
+  });
+
+  const compContainer = document.getElementById('compositeChips');
+  composites.forEach(c => {
+    const chip = document.createElement('button');
+    chip.className = 'prime-chip';
+    chip.style.borderColor = 'var(--gold-dim)';
+    chip.style.color = 'var(--gold)';
+    chip.style.background = 'rgba(240,192,64,0.05)';
+    chip.dataset.side = 'right';
+    chip.onclick = () => loadPanel('right', c, false, chip);
+    chip.textContent = c;
+    compContainer.appendChild(chip);
+  });
+
+  buildFactorBarChart();
+}
+buildPrimeSection();
+
+let leftNum = null, rightNum = null;
+
+function loadPanel(side, n, isPrimeNum, chip) {
+  // Highlight chip — only within its column
+  const column = isPrimeNum ? document.getElementById('primeChips') : document.getElementById('compositeChips');
+  column.querySelectorAll('.prime-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+
+  const factors = getFactors(n);
+  const pairs = [];
+  for (let i = 0; i < factors.length; i++) {
+    const f = factors[i];
+    if (f <= Math.sqrt(n)) pairs.push(`${f} × ${n/f}`);
+  }
+
+  const color = isPrimeNum ? 'var(--prime-color)' : 'var(--gold)';
+  const label = isPrimeNum ? '⭐ PRIME' : '🔶 COMPOSITE';
+  const verdict = isPrimeNum
+    ? `<span style="color:var(--prime-color)">✓ PRIME — Only 2 factors (1 and ${n}). Cannot be broken into any other whole number pairs.</span>`
+    : `<span style="color:var(--gold)">✗ COMPOSITE — ${factors.length} factors found. Can be broken into ${pairs.length} factor pair${pairs.length > 1 ? 's' : ''}.</span>`;
+
+  const html = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <div style="font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:${color};">${n}</div>
+      <div style="font-family:'Orbitron',monospace; font-size:0.65rem; color:${color}; letter-spacing:1px;">${label}</div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--cyan); margin-bottom:6px;">Factors: ${factors.join(', ')}</div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--text-dim); margin-bottom:10px;">Factor pairs: ${pairs.join(' &nbsp;|&nbsp; ')}</div>
+    <div style="font-size:0.82rem; line-height:1.6;">${verdict}</div>
+  `;
+
+  if (side === 'left') {
+    document.getElementById('leftDetail').innerHTML = html;
+    document.getElementById('leftDetail').style.borderColor = color;
+    leftNum = n;
+  } else {
+    document.getElementById('rightDetail').innerHTML = html;
+    document.getElementById('rightDetail').style.borderColor = color;
+    rightNum = n;
+  }
+
+  updateComparisonSummary();
+}
+
+function updateComparisonSummary() {
+  const summary = document.getElementById('comparisonSummary');
+  if (leftNum === null || rightNum === null) { summary.style.display = 'none'; return; }
+
+  const lf = getFactors(leftNum);
+  const rf = getFactors(rightNum);
+  const lp = isPrime(leftNum);
+  const rp = isPrime(rightNum);
+
+  summary.style.display = 'block';
+  summary.innerHTML = `
+    <strong style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--cyan); letter-spacing:1px;">📊 COMPARISON SUMMARY</strong><br><br>
+    <strong style="color:var(--prime-color)">${leftNum}</strong> has <strong>${lf.length} factor${lf.length>1?'s':''}</strong> → <em>${lp ? 'Prime' : 'Composite'}</em> &nbsp;|&nbsp;
+    <strong style="color:var(--gold)">${rightNum}</strong> has <strong>${rf.length} factor${rf.length>1?'s':''}</strong> → <em>${rp ? 'Prime' : 'Composite'}</em><br><br>
+    ${lf.length < rf.length
+      ? `<strong style="color:var(--prime-color)">${leftNum}</strong> has <strong>${rf.length - lf.length} fewer factor${rf.length-lf.length>1?'s':''}</strong> than ${rightNum} — making it harder to break apart and better suited for encryption.`
+      : lf.length > rf.length
+      ? `<strong style="color:var(--gold)">${rightNum}</strong> has <strong>${lf.length - rf.length} fewer factor${lf.length-rf.length>1?'s':''}</strong> than ${leftNum} — making it more resistant to factoring.`
+      : `Both numbers have the same number of factors (${lf.length}).`
+    }
+  `;
+}
+
+function buildFactorBarChart() {
+  const container = document.getElementById('factorBarChart');
+  if (!container) return;
+  const numbers = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19];
+  const maxFactors = Math.max(...numbers.map(n => getFactors(n).length));
+
+  numbers.forEach(n => {
+    const factors = getFactors(n);
+    const count = factors.length;
+    const prime = isPrime(n);
+    const pct = (count / maxFactors) * 100;
+    const color = prime ? 'var(--prime-color)' : 'var(--gold)';
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px;';
+    row.innerHTML = `
+      <div style="font-family:'Orbitron',monospace; font-size:0.75rem; font-weight:700; color:${color}; min-width:28px; text-align:right;">${n}</div>
+      <div style="flex:1; background:var(--vault-panel); border-radius:4px; height:22px; position:relative; overflow:hidden;">
+        <div style="position:absolute; left:0; top:0; bottom:0; width:${pct}%; background:${color}; border-radius:4px; opacity:0.8; transition:width 0.6s ease;"></div>
+        <div style="position:absolute; left:${pct < 50 ? 'calc('+pct+'% + 8px)' : '8px'}; top:50%; transform:translateY(-50%); font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:${pct < 50 ? 'var(--text-dim)' : 'var(--vault-black)'}; white-space:nowrap;">
+          ${count} factor${count>1?'s':''}: ${factors.join(', ')}
+        </div>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:${color}; min-width:60px;">${prime ? '⭐ Prime' : '🔶 Composite'}</div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ===================== VAULT INTRO ANIMATION =====================
+let vaultOpen = false;
+let vaultAttempts = 0;
+
+const accessDeniedMessages = [
+  '✗ ACCESS DENIED — Encryption key required. Complete your training.',
+  '✗ INVALID CREDENTIALS — Study Modules 01–04 first, Agent.',
+  '✗ SECURITY BREACH DETECTED — You need prime number knowledge to proceed.',
+  '✗ LOCKDOWN INITIATED — Master your factors before attempting entry.',
+  '✗ AUTHENTICATION FAILED — The vault demands mathematical proof.',
+];
+
+function triggerVaultOpen() {
+  const svg = document.getElementById('vaultSVG');
+  const door = document.getElementById('vaultDoor');
+  const lockLight = document.getElementById('lockLight');
+  const label = document.getElementById('vaultLabel');
+  const msg = document.getElementById('vaultAccessMsg');
+  const spokes = document.getElementById('dialSpokes');
+
+  vaultAttempts++;
+
+  if (!vaultOpen) {
+    // Spin the dial
+    const spin = document.getElementById('dialSpin');
+    spin.beginElement();
+
+    // Show denied message
+    msg.style.color = 'var(--red)';
+    msg.textContent = accessDeniedMessages[(vaultAttempts - 1) % accessDeniedMessages.length];
+
+    // Flash red
+    svg.style.filter = 'drop-shadow(0 0 20px rgba(255,68,68,0.6))';
+    lockLight.setAttribute('fill', '#ff4444');
+
+    // Shake animation
+    let shakeCount = 0;
+    const shake = setInterval(() => {
+      svg.style.transform = shakeCount % 2 === 0 ? 'translateX(4px)' : 'translateX(-4px)';
+      shakeCount++;
+      if (shakeCount > 6) {
+        clearInterval(shake);
+        svg.style.transform = 'translateX(0)';
+        svg.style.filter = 'drop-shadow(0 0 16px rgba(240,192,64,0.25))';
+      }
+    }, 60);
+
+    // After 5 attempts, crack open slightly then slam shut
+    if (vaultAttempts >= 5) {
+      setTimeout(() => {
+        door.setAttribute('transform', 'translate(-30, 0) skewY(-3)');
+        door.setAttribute('opacity', '0.7');
+        lockLight.setAttribute('fill', '#44ff88');
+        label.textContent = 'CRACKING...';
+        msg.style.color = 'var(--green)';
+        msg.textContent = '⚡ ALMOST... Complete your training to finish the job!';
+        setTimeout(() => {
+          door.removeAttribute('transform');
+          door.setAttribute('opacity', '1');
+          lockLight.setAttribute('fill', '#ff4444');
+          label.textContent = 'LOCKED';
+        }, 1200);
+      }, 400);
+      vaultAttempts = 0;
+    }
+
+  } else {
+    // Close the vault
+    door.removeAttribute('transform');
+    door.setAttribute('opacity', '1');
+    lockLight.setAttribute('fill', '#ff4444');
+    label.textContent = 'LOCKED';
+    svg.style.filter = 'drop-shadow(0 0 16px rgba(240,192,64,0.25))';
+    msg.style.color = 'var(--text-dim)';
+    msg.textContent = '🔒 Vault secured. Keep studying, Agent.';
+    vaultOpen = false;
+  }
+}
+
+// Unlock vault (called from mission complete)
+function unlockVault() {
+  const door = document.getElementById('vaultDoor');
+  const lockLight = document.getElementById('lockLight');
+  const label = document.getElementById('vaultLabel');
+  const svg = document.getElementById('vaultSVG');
+  const msg = document.getElementById('vaultAccessMsg');
+  if (!door) return;
+  door.setAttribute('transform', 'translate(-50, 0) skewY(-8)');
+  door.setAttribute('opacity', '0.3');
+  lockLight.setAttribute('fill', '#44ff88');
+  label.textContent = 'UNLOCKED';
+  svg.style.filter = 'drop-shadow(0 0 28px rgba(68,255,136,0.5))';
+  if (msg) { msg.style.color = 'var(--green)'; msg.textContent = '✓ VAULT SECURED — Mission Complete!'; }
+  vaultOpen = true;
+}
+
+// Mission clock
+function startMissionClock() {
+  const el = document.getElementById('missionClock');
+  if (!el) return;
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    el.textContent = `MISSION TIME: ${h}:${m}:${s}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+startMissionClock();
+let selectedRules = [2,3,4,5,6,8,9,10];
+let quizScore = 0;
+let quizTotal = 0;
+let currentNum = null;
+let currentDivisor = null;
+let answered = false;
+
+function toggleRule(btn) {
+  const rule = parseInt(btn.dataset.rule);
+  btn.classList.toggle('selected');
+  if (btn.classList.contains('selected')) {
+    if (!selectedRules.includes(rule)) selectedRules.push(rule);
+  } else {
+    selectedRules = selectedRules.filter(r => r !== rule);
+  }
+}
+
+function startQuiz() {
+  if (selectedRules.length === 0) {
+    alert('Please select at least one rule to be quizzed on!');
+    return;
+  }
+  quizScore = 0; quizTotal = 0;
+  document.getElementById('quizBox').style.display = 'block';
+  document.getElementById('quizFeedback').textContent = '';
+  updateScore();
+  nextQuiz();
+}
+
+function nextQuiz() {
+  answered = false;
+  document.getElementById('quizFeedback').textContent = '';
+  currentDivisor = selectedRules[Math.floor(Math.random() * selectedRules.length)];
+  // Generate a random 3-digit number
+  currentNum = Math.floor(Math.random() * 900) + 100;
+  document.getElementById('quizNumber').textContent = currentNum;
+  document.getElementById('quizDivisor').textContent = `÷ ${currentDivisor}`;
+}
+
+function answerQuiz(userSaysYes) {
+  if (answered) return;
+  answered = true;
+  const correct = currentNum % currentDivisor === 0;
+  quizTotal++;
+  const fb = document.getElementById('quizFeedback');
+  if (userSaysYes === correct) {
+    quizScore++;
+    fb.className = 'quiz-feedback correct';
+    fb.textContent = correct
+      ? `✓ Correct! ${currentNum} ÷ ${currentDivisor} = ${currentNum / currentDivisor} (no remainder)`
+      : `✓ Correct! ${currentNum} is NOT divisible by ${currentDivisor}`;
+  } else {
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = correct
+      ? `✗ Not quite. ${currentNum} ÷ ${currentDivisor} = ${currentNum / currentDivisor} — it IS divisible!`
+      : `✗ Not quite. ${currentNum} ÷ ${currentDivisor} = ${(currentNum / currentDivisor).toFixed(2)} — it's NOT divisible.`;
+  }
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('quizScore').textContent = `Score: ${quizScore} / ${quizTotal}`;
+}
+
+function resetQuiz() {
+  quizScore = 0; quizTotal = 0;
+  updateScore();
+  nextQuiz();
+  document.getElementById('quizFeedback').textContent = '';
+}
+
+// ===================== SECTION 4: PRIME LIST =====================
+let showPrimesOnly = false;
+
+function buildPrimeList() {
+  const allPrimes = [];
+  for (let i = 1; i <= 1000; i++) { if (isPrime(i)) allPrimes.push(i); }
+  document.getElementById('primeStats').textContent = `${allPrimes.length} prime numbers found between 1 and 1000`;
+
+  const container = document.getElementById('primeListContainer');
+  container.innerHTML = '';
+
+  const groups = [
+    { label: '1 — 99', start: 1, end: 99 },
+    { label: '100 — 199', start: 100, end: 199 },
+    { label: '200 — 299', start: 200, end: 299 },
+    { label: '300 — 399', start: 300, end: 399 },
+    { label: '400 — 499', start: 400, end: 499 },
+    { label: '500 — 599', start: 500, end: 599 },
+    { label: '600 — 699', start: 600, end: 699 },
+    { label: '700 — 799', start: 700, end: 799 },
+    { label: '800 — 899', start: 800, end: 899 },
+    { label: '900 — 1000', start: 900, end: 1000 },
+  ];
+
+  groups.forEach(g => {
+    const section = document.createElement('div');
+    section.className = 'hundreds-section';
+    const label = document.createElement('div');
+    label.className = 'hundreds-label';
+    label.textContent = `// RANGE: ${g.label}`;
+    section.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'number-grid';
+    for (let n = g.start; n <= g.end; n++) {
+      const cell = document.createElement('div');
+      cell.className = 'num-cell' + (isPrime(n) ? ' is-prime' : '');
+      cell.id = 'nc-' + n;
+      cell.textContent = n;
+      if (isPrime(n)) cell.title = `${n} is prime`;
+      grid.appendChild(cell);
+    }
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+}
+buildPrimeList();
+
+function togglePrimeView() {
+  showPrimesOnly = true;
+  document.getElementById('togglePrimeBtn').classList.add('active');
+  document.getElementById('toggleAllBtn').classList.remove('active');
+  document.querySelectorAll('.num-cell:not(.is-prime)').forEach(c => c.classList.add('hidden-composite'));
+}
+
+function toggleAllView() {
+  showPrimesOnly = false;
+  document.getElementById('toggleAllBtn').classList.add('active');
+  document.getElementById('togglePrimeBtn').classList.remove('active');
+  document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('hidden-composite'));
+}
+
+// ===================== SECTION 5: VAULT MISSION =====================
+let p1Valid = false, p2Valid = false;
+let p1Val = null, p2Val = null;
+let productVal = null;
+let primeAnswerSelected = null;
+let selectedDivRules = [];
+
+function validatePrime(which) {
+  const input = document.getElementById('prime' + which + 'Input');
+  const status = document.getElementById('status' + which);
+  const val = parseInt(input.value);
+
+  if (isNaN(val) || val < 100 || val > 999) {
+    input.className = 'vault-input';
+    status.className = 'input-status neutral';
+    status.textContent = 'Enter a 3-digit number (100–999)';
+    if (which === 1) { p1Valid = false; p1Val = null; }
+    else { p2Valid = false; p2Val = null; }
+    checkStep3Unlock();
+    return;
+  }
+
+  if (!isPrime(val)) {
+    input.className = 'vault-input invalid';
+    status.className = 'input-status invalid';
+    const factors = getFactors(val).filter(f => f !== 1 && f !== val);
+    status.textContent = `✗ ${val} is NOT prime — it has factors: ${getFactors(val).join(', ')}`;
+    if (which === 1) { p1Valid = false; p1Val = null; }
+    else { p2Valid = false; p2Val = null; }
+    checkStep3Unlock();
+    return;
+  }
+
+  // Check same as other
+  const other = which === 1 ? p2Val : p1Val;
+  if (other !== null && val === other) {
+    input.className = 'vault-input invalid';
+    status.className = 'input-status invalid';
+    status.textContent = '✗ Must be different from your first prime!';
+    if (which === 1) { p1Valid = false; p1Val = null; }
+    else { p2Valid = false; p2Val = null; }
+    checkStep3Unlock();
+    return;
+  }
+
+  input.className = 'vault-input valid';
+  status.className = 'input-status valid';
+  status.textContent = `✓ ${val} is prime! Factors: 1 and ${val} only`;
+  if (which === 1) { p1Valid = true; p1Val = val; }
+  else { p2Valid = true; p2Val = val; }
+  checkStep3Unlock();
+}
+
+function checkStep3Unlock() {
+  const step3 = document.getElementById('step3');
+  const badge3 = document.getElementById('badge3');
+  const genBtn = document.getElementById('generateBtn');
+  if (p1Valid && p2Valid) {
+    step3.classList.remove('disabled-step');
+    badge3.className = 'step-badge';
+    badge3.textContent = 'STEP 3';
+    genBtn.style.display = 'inline-block';
+    document.getElementById('productEquation').textContent = `${p1Val} × ${p2Val} =`;
+    document.getElementById('productResult').textContent = '???';
+  } else {
+    step3.classList.add('disabled-step');
+    badge3.className = 'step-badge locked';
+    badge3.textContent = 'STEP 3 — LOCKED';
+    genBtn.style.display = 'none';
+  }
+  document.getElementById('step4').classList.add('disabled-step');
+  document.getElementById('badge4').className = 'step-badge locked';
+  document.getElementById('badge4').textContent = 'STEP 4 — LOCKED';
+  document.getElementById('vaultResult').className = 'vault-result';
+}
+
+function generateProduct() {
+  productVal = p1Val * p2Val;
+  document.getElementById('productResult').textContent = productVal.toLocaleString();
+  document.getElementById('badge3').className = 'step-badge complete';
+  document.getElementById('badge3').textContent = 'STEP 3 ✓';
+
+  // Unlock step 4
+  const step4 = document.getElementById('step4');
+  step4.classList.remove('disabled-step');
+  document.getElementById('badge4').className = 'step-badge';
+  document.getElementById('badge4').textContent = 'STEP 4';
+
+  // Reset analysis
+  primeAnswerSelected = null;
+  selectedDivRules = [];
+  document.getElementById('opt-yes').className = 'analysis-opt';
+  document.getElementById('opt-no').className = 'analysis-opt';
+  document.getElementById('primeAnswerFeedback').textContent = '';
+  document.getElementById('divRulesSection').style.display = 'none';
+  document.getElementById('vaultResult').className = 'vault-result';
+  buildDivCheckGrid();
+}
+
+function selectPrimeAnswer(answer) {
+  primeAnswerSelected = answer;
+  document.getElementById('opt-yes').className = 'analysis-opt' + (answer === 'yes' ? ' selected-yes' : '');
+  document.getElementById('opt-no').className = 'analysis-opt' + (answer === 'no' ? ' selected-no' : '');
+
+  const fb = document.getElementById('primeAnswerFeedback');
+  const productIsPrime = isPrime(productVal);
+
+  if (answer === 'no' && !productIsPrime) {
+    fb.style.color = 'var(--green)';
+    fb.textContent = `✓ Correct! ${productVal.toLocaleString()} is NOT prime. The product of two primes greater than 1 is never prime — it always has at least 4 factors: 1, ${p1Val}, ${p2Val}, and ${productVal}.`;
+    document.getElementById('divRulesSection').style.display = 'block';
+  } else if (answer === 'yes') {
+    fb.style.color = 'var(--red)';
+    fb.textContent = `✗ Think again. ${productVal.toLocaleString()} = ${p1Val} × ${p2Val}. That means it has ${p1Val} as a factor — which proves it can't be prime. A prime only divides evenly by 1 and itself.`;
+    document.getElementById('divRulesSection').style.display = 'none';
+  }
+}
+
+function buildDivCheckGrid() {
+  const grid = document.getElementById('divCheckGrid');
+  grid.innerHTML = '';
+  [2,3,4,5,6,8,9,10].forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'divcheck';
+    btn.id = 'dc-' + r;
+    btn.textContent = `Divisible by ${r}`;
+    btn.onclick = () => {
+      btn.classList.toggle('selected');
+      if (btn.classList.contains('selected')) {
+        if (!selectedDivRules.includes(r)) selectedDivRules.push(r);
+      } else {
+        selectedDivRules = selectedDivRules.filter(x => x !== r);
+      }
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function submitDivRules() {
+  if (!productVal) return;
+  const actualRules = [2,3,4,5,6,8,9,10].filter(r => productVal % r === 0);
+  let correct = 0, wrong = 0, missed = 0;
+
+  [2,3,4,5,6,8,9,10].forEach(r => {
+    const btn = document.getElementById('dc-' + r);
+    const userSelected = selectedDivRules.includes(r);
+    const isActual = actualRules.includes(r);
+    if (userSelected && isActual) { btn.className = 'divcheck correct-check'; correct++; }
+    else if (userSelected && !isActual) { btn.className = 'divcheck wrong-check'; wrong++; }
+    else if (!userSelected && isActual) { btn.className = 'divcheck'; missed++; }
+  });
+
+  const resultBox = document.getElementById('vaultResult');
+  const resultIcon = document.getElementById('resultIcon');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultText = document.getElementById('resultText');
+
+  const actualStr = actualRules.length > 0 ? actualRules.map(r => `÷${r}`).join(', ') : 'none of the listed rules';
+
+  if (wrong === 0 && missed === 0) {
+    resultBox.className = 'vault-result success';
+    resultIcon.textContent = '🔐';
+    resultTitle.textContent = 'VAULT SECURED — ENCRYPTION ACCEPTED';
+    resultText.innerHTML = `Outstanding work, Agent! Your encryption key <strong>${productVal.toLocaleString()}</strong> (${p1Val} × ${p2Val}) is correctly identified as composite, and you identified all applicable divisibility rules: <strong>${actualStr}</strong>. Your security clearance has been upgraded.`;
+    unlockVault();
+  } else {
+    resultBox.className = 'vault-result partial';
+    resultIcon.textContent = '⚠️';
+    resultTitle.textContent = 'ANALYSIS INCOMPLETE — REVIEW REQUIRED';
+    resultText.innerHTML = `Good effort! Your key <strong>${productVal.toLocaleString()}</strong> is actually divisible by: <strong>${actualStr}</strong>. 
+    ${wrong > 0 ? `You selected ${wrong} rule(s) that don't apply — highlighted in red. ` : ''}
+    ${missed > 0 ? `You missed ${missed} rule(s) that do apply — they remain unhighlighted. ` : ''}
+    Review your divisibility rules and try again.`;
+  }
+}
+
+function resetMission() {
+  document.getElementById('prime1Input').value = '';
+  document.getElementById('prime2Input').value = '';
+  document.getElementById('prime1Input').className = 'vault-input';
+  document.getElementById('prime2Input').className = 'vault-input';
+  document.getElementById('status1').textContent = 'Enter a 3-digit number';
+  document.getElementById('status1').className = 'input-status neutral';
+  document.getElementById('status2').textContent = 'Enter a 3-digit number';
+  document.getElementById('status2').className = 'input-status neutral';
+  p1Valid = false; p2Valid = false; p1Val = null; p2Val = null; productVal = null;
+  primeAnswerSelected = null; selectedDivRules = [];
+  document.getElementById('step3').classList.add('disabled-step');
+  document.getElementById('step4').classList.add('disabled-step');
+  document.getElementById('badge3').className = 'step-badge locked';
+  document.getElementById('badge3').textContent = 'STEP 3 — LOCKED';
+  document.getElementById('badge4').className = 'step-badge locked';
+  document.getElementById('badge4').textContent = 'STEP 4 — LOCKED';
+  document.getElementById('generateBtn').style.display = 'none';
+  document.getElementById('productEquation').textContent = '??? × ??? =';
+  document.getElementById('productResult').textContent = '—';
+  document.getElementById('vaultResult').className = 'vault-result';
+  document.getElementById('primeAnswerFeedback').textContent = '';
+  document.getElementById('divRulesSection').style.display = 'none';
+  document.getElementById('opt-yes').className = 'analysis-opt';
+  document.getElementById('opt-no').className = 'analysis-opt';
+}
+</script>
+</body>
+</html>
